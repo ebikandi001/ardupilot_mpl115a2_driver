@@ -65,6 +65,7 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T)
 	uint8_t buf[4];
 
 	// Get raw pressure and temperature settings
+	//FIXME MPL115A2_REGISTER_PRESSURE_MSB = 0x00 ???
 	hal.i2c->writeRegister(MPL115A2_ADDRESS,MPL115A2_REGISTER_STARTCONVERSION, 0x00);
 //	Wire.beginTransmission(MPL115A2_ADDRESS);
 //	i2cwrite((uint8_t)MPL115A2_REGISTER_STARTCONVERSION);
@@ -75,12 +76,12 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T)
 	sleep(5);
 //	delay(5);
 
-//FIXME MPL115A2_REGISTER_PRESSURE_MSB = 0x00 ???
-	hal.i2c->writeRegister(MPL115A2_ADDRESS,0x00, MPL115A2_REGISTER_PRESSURE_MSB);
+//	hal.i2c->writeRegister(MPL115A2_ADDRESS,0x00, MPL115A2_REGISTER_PRESSURE_MSB);
 //	Wire.beginTransmission(MPL115A2_ADDRESS);
 //	i2cwrite((uint8_t)MPL115A2_REGISTER_PRESSURE_MSB);  // Register
 //	Wire.endTransmission();
 
+	//TODO test the read to the register 0x00 (PL115A2_REGISTER_PRESSURE_MSB)
 	hal.i2c->read(MPL115A2_ADDRESS, 4, buf);
 //	Wire.requestFrom(MPL115A2_ADDRESS, 4);
 

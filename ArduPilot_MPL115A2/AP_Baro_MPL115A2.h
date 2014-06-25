@@ -2,6 +2,7 @@
 #define __AP_BARO_MPL115A2_H__
 
 #include "stdint.h"
+#include "unistd.h"
 #include "AP_Baro.h"
 #include "AP_HAL.h"
 
