@@ -102,6 +102,14 @@ float AP_Baro_MPL115A2::getTemperature(void) {
 }
 
 void AP_Baro_MPL115A2::getPT(float *P, float *T) {
+
+	// get pointer to i2c bus semaphore
+	AP_HAL::Semaphore* i2c_sem = hal.i2c->get_semaphore();
+
+	// take i2c bus sempahore
+	if (!i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
+	return;
+
 	if (!healthy)
 		return;
 
@@ -140,4 +148,6 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 	// Return pressure and temperature as floating point values
 	*P = ((65.0F / 1023.0F) * pressureComp) + 50.0F;        // kPa
 	*T = ((float) temp - 498.0F) / -5.35F + 25.0F;
+	i2c_sem->give();
+
 }
