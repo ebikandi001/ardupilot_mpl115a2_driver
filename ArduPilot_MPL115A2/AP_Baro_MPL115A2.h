@@ -46,7 +46,7 @@ public:
 	/* AP_Baro public interface: */
 	bool            init();
 	uint8_t         read();
-	void 		accumulate(void);
+//	void 		accumulate(void);
 	float           get_pressure();
 	float           get_temperature();
 
