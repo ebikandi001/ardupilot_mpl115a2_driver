@@ -9,10 +9,16 @@
 extern const AP_HAL::HAL& hal;
 
 //bool healthy; --> AP_Baro.h
+/**************************************************************************/
+/*				PUBLIC METHODSS											   */
+/**************************************************************************/
 
-// Public Methods //////////////////////////////////////////
+/**************************************************************************/
+/*!
+    @brief  Setups the HW (reads coefficients values, etc.)
+*/
+/**************************************************************************/
 bool AP_Baro_MPL115A2::init() {
-	//uint8_t buff[22];
 
 	// get pointer to i2c bus semaphore
 	AP_HAL::Semaphore* i2c_sem = hal.i2c->get_semaphore();
@@ -28,23 +34,37 @@ bool AP_Baro_MPL115A2::init() {
 	return true;
 }
 
-//void AP_Baro_MPL115A2::accumulate(void)
-//{
-//
-//}
-
+/**************************************************************************/
+/*!
+	@brief  Gets the floating-point pressure level in kPa (private method)
+*/
+/**************************************************************************/
 float AP_Baro_MPL115A2::get_pressure() {
 	return getPressure();
 }
 
+
+/**************************************************************************/
+/*!
+    @brief  Gets the floating-point temperature in Centigrade (public method)
+*/
+/**************************************************************************/
 float AP_Baro_MPL115A2::get_temperature() {
 	return getTemperature();
 }
 
-// Private Methods //////////////////////////////////////////////
-//Based on the Driver AdaFruit_MPL115A2
+/**************************************************************************/
+/*				PRIVATE METHODS
+	  		(Based on the Driver AdaFruit_MPL115A2)						  */
+/**************************************************************************/
+
+/**************************************************************************/
+/*!
+    @brief  Gets the factory-set coefficients for this particular sensor
+*/
+/**************************************************************************/
 void AP_Baro_MPL115A2::readCoefficients() {
-	//FIXME repasar
+	//The semaphore is taken on the init() mtehod
 	if (!healthy)
 		return;
 
@@ -82,31 +102,46 @@ void AP_Baro_MPL115A2::readCoefficients() {
 	 */
 }
 
-//void 	AP_Baro_MPL115A2::begin(void)
-//{
-//	 hal.i2c->begin();
-//	  // Read factory coefficient values (this only needs to be done once)
-//	 readCoefficients();
-//}
+/*void 	AP_Baro_MPL115A2::begin(void)
+{
+	 hal.i2c->begin();
+	  // Read factory coefficient values (this only needs to be done once)
+	 readCoefficients();
+}*/
 
+/**************************************************************************/
+/*!
+    @brief  Gets the floating-point pressure level in kPa (private method)
+*/
+/**************************************************************************/
 float AP_Baro_MPL115A2::getPressure(void) {
 	float pressureComp, centigrade;
 	getPT(&pressureComp, &centigrade);
 	return pressureComp;
 }
 
+/**************************************************************************/
+/*!
+    @brief  Gets the floating-point temperature in Centigrade (private method)
+*/
+/**************************************************************************/
 float AP_Baro_MPL115A2::getTemperature(void) {
 	float pressureComp, centigrade;
 	getPT(&pressureComp, &centigrade);
 	return centigrade;
 }
 
+/**************************************************************************/
+/*!
+    @brief  Gets both at once and saves a little time
+*/
+/**************************************************************************/
 void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 
 	// get pointer to i2c bus semaphore
 	AP_HAL::Semaphore* i2c_sem = hal.i2c->get_semaphore();
 
-	// take i2c bus sempahore
+	// take i2c bus semaphore
 	if (!i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
 	return;
 
@@ -119,7 +154,6 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 	uint8_t res;
 
 	// Get raw pressure and temperature settings
-	//FIXME MPL115A2_REGISTER_PRESSURE_MSB = 0x00 ???
 	res = hal.i2c->writeRegister(MPL115A2_ADDRESS,
 			MPL115A2_REGISTER_STARTCONVERSION, 0x00);
 	if (res != 0) {
@@ -129,7 +163,6 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 	// Wait a bit for the conversion to complete (3ms max)
 	sleep(5);	//delay(5);
 
-	//TODO test the read to the register 0x00 (PL115A2_REGISTER_PRESSURE_MSB)
 	res = hal.i2c->read(MPL115A2_ADDRESS, 4, buf);
 
 	if (res != 0) {
@@ -137,7 +170,7 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 		healthy = false;
 		return;
 	}
-	//TODO checkout the buf[] indexes and the pressure/Temp registers
+	//TODO checkout the buf[] indexes
 	pressure = (((uint16_t) buf[0] << 8) | buf[1]) >> 6;
 	temp = (((uint16_t) buf[2] << 8) | buf[3]) >> 6;
 

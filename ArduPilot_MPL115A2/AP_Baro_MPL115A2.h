@@ -44,22 +44,16 @@ public:
 	/* AP_Baro public interface: */
 	bool init();
 	uint8_t read();
-//	void 		accumulate(void);
 	float get_pressure();
 	float get_temperature();
 
 private:
 
-	void begin(void);
+//	void begin(void);
 	float getPressure(void);
 	float getTemperature(void);
 	void getPT(float *P, float *T);
 
-//	float           Temp; //FIXME
-//	float           Press;//FIXME
-
-	//	float 	_temp_sum;
-//	float	_press_sum;
 
 	float _mpl115a2_a0;
 	float _mpl115a2_b1;
