@@ -65,8 +65,6 @@ float AP_Baro_MPL115A2::get_temperature() {
 /**************************************************************************/
 void AP_Baro_MPL115A2::readCoefficients() {
 	//The semaphore is taken on the init() mtehod
-	if (!healthy)
-		return;
 
 	int16_t a0coeff;
 	int16_t b1coeff;
