@@ -53,9 +53,6 @@ public:
 
 private:
 
-	float getPressure(void);
-	float getTemperature(void);
-
 	//Semaphore has to be taken before calling this 2 functions
 	void getPT(float *P, float *T);
 	void readCoefficients(void);

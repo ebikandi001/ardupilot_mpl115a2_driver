@@ -14,9 +14,7 @@
  *       				accumulate(void): Accumulates the data in order to give an average value of read values.
  *       				get_pressure(): returns the pressure.
  *       				get_temperature(): returns the temperature.
-*       private methos:
-*       				getPressure(void): Gets the floating-point pressure level in kPa
-*       				getTemperature(void):  Gets the floating-point temperature in Centigrades
+*       private methods:
 *       				getPT(float *P, float *T): Calculates pressure and temperature (both at once and saves a little time)
 *       				readCoefficients(void): Gets the factory-set coefficients for this particular sensor
 *
@@ -92,11 +90,11 @@ void AP_Baro_MPL115A2::accumulate(void){
 }
 
 float AP_Baro_MPL115A2::get_pressure() {
-	return getPressure();
+	return Press;
 }
 
 float AP_Baro_MPL115A2::get_temperature() {
-	return getTemperature();
+	return Temp;
 }
 
 
@@ -140,42 +138,6 @@ void AP_Baro_MPL115A2::readCoefficients() {
 	 Serial.print("b2 = "); Serial.println(_mpl115a2_b2);
 	 Serial.print("c12 = "); Serial.println(_mpl115a2_c12);
 	 */
-}
-
-
-float AP_Baro_MPL115A2::getPressure(void) {
-	float pressureComp, centigrade;
-
-	// get pointer to i2c bus semaphore
-	AP_HAL::Semaphore* i2c_sem = hal.i2c->get_semaphore();
-
-	// take i2c bus semaphore
-	if (!i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
-	return -1;
-
-	getPT(&pressureComp, &centigrade);
-	return pressureComp;
-
-	i2c_sem->give();
-
-}
-
-
-float AP_Baro_MPL115A2::getTemperature(void) {
-	float pressureComp, centigrade;
-
-	// get pointer to i2c bus semaphore
-	AP_HAL::Semaphore* i2c_sem = hal.i2c->get_semaphore();
-
-	// take i2c bus semaphore
-	if (!i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
-	return -1;
-
-	getPT(&pressureComp, &centigrade);
-	return centigrade;
-
-	i2c_sem->give();
-
 }
 
 
