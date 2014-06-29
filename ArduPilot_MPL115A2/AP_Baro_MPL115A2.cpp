@@ -39,6 +39,7 @@ bool AP_Baro_MPL115A2::init() {
 	_temp_sum = 0;
 	_press_sum = 0;
 	_count = 0;
+    _retry_time = hal.scheduler->millis() + 1000;
 
 
 	readCoefficients();
