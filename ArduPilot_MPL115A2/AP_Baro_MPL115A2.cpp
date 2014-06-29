@@ -1,23 +1,34 @@
 /*
  * AP_Baro_MPL115A2.cpp
+
  *
  *  Created on: 25/06/2014
  *      Author: ebikandi001
- */
+ *
+ *       AP_Baro_MPL115A2.cpp - Arduino Library for MPL115A2 sensor
+ *       Sensor is conected to I2C port
+ *
+ *       public methods:
+ *       				init(): Setups the HW (reads coefficients values, etc.)
+ *       				read(): Reads sensor data and calculates Temperature and Pressure
+ *       				accumulate(void): Accumulates the data in order to give an average value of read values.
+ *       				get_pressure(): returns the pressure.
+ *       				get_temperature(): returns the temperature.
+*       private methos:
+*       				getPressure(void): Gets the floating-point pressure level in kPa
+*       				getTemperature(void):  Gets the floating-point temperature in Centigrades
+*       				getPT(float *P, float *T): Calculates pressure and temperature (both at once and saves a little time)
+*       				readCoefficients(void): Gets the factory-set coefficients for this particular sensor
+*
+*
+*/
+
+
 #include "AP_Baro_MPL115A2.h"
+
 
 extern const AP_HAL::HAL& hal;
 
-//bool healthy; --> AP_Baro.h
-/**************************************************************************/
-/*				PUBLIC METHODSS											   */
-/**************************************************************************/
-
-/**************************************************************************/
-/*!
-    @brief  Setups the HW (reads coefficients values, etc.)
-*/
-/**************************************************************************/
 bool AP_Baro_MPL115A2::init() {
 
 	// get pointer to i2c bus semaphore
@@ -27,20 +38,48 @@ bool AP_Baro_MPL115A2::init() {
 	if (!i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
 		return false;
 
+	_temp_sum = 0;
+	_press_sum = 0;
+	_count = 0;
+
+
 	readCoefficients();
 
 	healthy = true;
+
 	i2c_sem->give();
+
 	return true;
 }
 
 
-/**************************************************************************/
-/*!
-	@brief  Reads the newest data and stores it in variables
-*/
-/**************************************************************************/
 uint8_t AP_Baro_MPL115A2::read(){
+
+
+	if (_count == 0) {
+		accumulate();
+	}
+
+    _last_update = hal.scheduler->millis();
+
+    Press = _press_sum / _count;
+	Temp =  0.1f * _temp_sum / _count;
+
+	 _pressure_samples = _count;
+	_count = 0;
+	_temp_sum = 0;
+	_press_sum = 0;
+
+	return 1;
+}
+
+void AP_Baro_MPL115A2::accumulate(void){
+	// get pointer to i2c bus semaphore
+	AP_HAL::Semaphore* i2c_sem = hal.i2c->get_semaphore();
+
+	// take i2c bus sempahore
+	if (!i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
+		return;
 
 	//Read the coefficients to ensure the newest data
 	readCoefficients();
@@ -48,41 +87,21 @@ uint8_t AP_Baro_MPL115A2::read(){
 	//Get the pressure and temperature
 	getPT(&Press, &Temp);
 
-	return 1;
+	i2c_sem->give();
+
 }
 
-
-/**************************************************************************/
-/*!
-	@brief  Gets the floating-point pressure level in kPa (private method)
-*/
-/**************************************************************************/
 float AP_Baro_MPL115A2::get_pressure() {
 	return getPressure();
 }
 
-
-/**************************************************************************/
-/*!
-    @brief  Gets the floating-point temperature in Centigrade (public method)
-*/
-/**************************************************************************/
 float AP_Baro_MPL115A2::get_temperature() {
 	return getTemperature();
 }
 
-/**************************************************************************/
-/*				PRIVATE METHODS
-	  		(Based on the Driver AdaFruit_MPL115A2)						  */
-/**************************************************************************/
 
-/**************************************************************************/
-/*!
-    @brief  Gets the factory-set coefficients for this particular sensor
-*/
-/**************************************************************************/
+
 void AP_Baro_MPL115A2::readCoefficients() {
-	//The semaphore is taken on the init() mtehod
 
 	int16_t a0coeff;
 	int16_t b1coeff;
@@ -91,8 +110,13 @@ void AP_Baro_MPL115A2::readCoefficients() {
 	uint8_t buf[8];
 	uint8_t res;
 
+	if (!healthy && hal.scheduler->millis() < _retry_time) {
+			return;
+		}
+
 	res = hal.i2c->readRegisters(MPL115A2_ADDRESS,
 			MPL115A2_REGISTER_A0_COEFF_MSB, 8, buf);
+
 	if (res != 0) {
 		hal.i2c->setHighSpeed(false);
 		healthy = false;
@@ -118,51 +142,44 @@ void AP_Baro_MPL115A2::readCoefficients() {
 	 */
 }
 
-/*void 	AP_Baro_MPL115A2::begin(void)
-{
-	 hal.i2c->begin();
-	  // Read factory coefficient values (this only needs to be done once)
-	 readCoefficients();
-}*/
 
-/**************************************************************************/
-/*!
-    @brief  Gets the floating-point pressure level in kPa (private method)
-*/
-/**************************************************************************/
 float AP_Baro_MPL115A2::getPressure(void) {
 	float pressureComp, centigrade;
-	getPT(&pressureComp, &centigrade);
-	return pressureComp;
-}
-
-/**************************************************************************/
-/*!
-    @brief  Gets the floating-point temperature in Centigrade (private method)
-*/
-/**************************************************************************/
-float AP_Baro_MPL115A2::getTemperature(void) {
-	float pressureComp, centigrade;
-	getPT(&pressureComp, &centigrade);
-	return centigrade;
-}
-
-/**************************************************************************/
-/*!
-    @brief  Gets both at once and saves a little time
-*/
-/**************************************************************************/
-void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 
 	// get pointer to i2c bus semaphore
 	AP_HAL::Semaphore* i2c_sem = hal.i2c->get_semaphore();
 
 	// take i2c bus semaphore
 	if (!i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
-	return;
+	return -1;
 
-	if (!healthy)
-		return;
+	getPT(&pressureComp, &centigrade);
+	return pressureComp;
+
+	i2c_sem->give();
+
+}
+
+
+float AP_Baro_MPL115A2::getTemperature(void) {
+	float pressureComp, centigrade;
+
+	// get pointer to i2c bus semaphore
+	AP_HAL::Semaphore* i2c_sem = hal.i2c->get_semaphore();
+
+	// take i2c bus semaphore
+	if (!i2c_sem->take(HAL_SEMAPHORE_BLOCK_FOREVER))
+	return -1;
+
+	getPT(&pressureComp, &centigrade);
+	return centigrade;
+
+	i2c_sem->give();
+
+}
+
+
+void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 
 	uint16_t pressure, temp;
 	float pressureComp;
@@ -172,12 +189,13 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 	// Get raw pressure and temperature settings
 	res = hal.i2c->writeRegister(MPL115A2_ADDRESS,
 			MPL115A2_REGISTER_STARTCONVERSION, 0x00);
+
 	if (res != 0) {
 		healthy = false;
 	}
 
 	// Wait a bit for the conversion to complete (3ms max)
-	sleep(5);	//delay(5);
+	hal.scheduler->delay(3);
 
 	res = hal.i2c->read(MPL115A2_ADDRESS, 4, buf);
 
@@ -186,7 +204,7 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 		healthy = false;
 		return;
 	}
-	//TODO checkout the buf[] indexes
+
 	pressure = (((uint16_t) buf[0] << 8) | buf[1]) >> 6;
 	temp = (((uint16_t) buf[2] << 8) | buf[3]) >> 6;
 
@@ -197,6 +215,16 @@ void AP_Baro_MPL115A2::getPT(float *P, float *T) {
 	// Return pressure and temperature as floating point values
 	*P = ((65.0F / 1023.0F) * pressureComp) + 50.0F;        // kPa
 	*T = ((float) temp - 498.0F) / -5.35F + 25.0F;
-	i2c_sem->give();
+
+	_temp_sum += *T;
+	_press_sum += *P;
+
+	_count++;
+	    if (_count == 254) {
+	        _temp_sum *= 0.5;
+	        _press_sum *= 0.5;
+	        _count /= 2;
+	    }
+
 
 }

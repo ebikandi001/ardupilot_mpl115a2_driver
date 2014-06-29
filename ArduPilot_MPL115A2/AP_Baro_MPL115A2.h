@@ -5,8 +5,10 @@
 #include "unistd.h"
 #include "AP_Baro.h"
 #include "AP_HAL.h"
+#include <AP_Common.h>
+#include <AP_Math.h>            // ArduPilot Mega Vector/Matrix math Library
 
-//#include <AverageFilter.h>
+
 /*=========================================================================
  I2C ADDRESS/BITS
  -----------------------------------------------------------------------*/
@@ -38,20 +40,23 @@ public:
 		_mpl115a2_b1 = 0.0F;
 		_mpl115a2_b2 = 0.0F;
 		_mpl115a2_c12 = 0.0F;
+		_pressure_samples = 1;
 	}
 	;       // Constructor
 
 	/* AP_Baro public interface: */
 	bool init();
 	uint8_t read();
+    void	accumulate(void);
 	float get_pressure();
 	float get_temperature();
 
 private:
 
-//	void begin(void);
 	float getPressure(void);
 	float getTemperature(void);
+
+	//Semaphore has to be taken before calling this 2 functions
 	void getPT(float *P, float *T);
 	void readCoefficients(void);
 
@@ -62,6 +67,11 @@ private:
 
 	float           Temp;
 	float           Press;
+	float		    _temp_sum;
+	float			_press_sum;
+	uint8_t			_count;
+
+	uint32_t        _retry_time;
 
 };
 
