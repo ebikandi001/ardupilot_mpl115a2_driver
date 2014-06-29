@@ -53,14 +53,16 @@ private:
 	float getPressure(void);
 	float getTemperature(void);
 	void getPT(float *P, float *T);
-
+	void readCoefficients(void);
 
 	float _mpl115a2_a0;
 	float _mpl115a2_b1;
 	float _mpl115a2_b2;
 	float _mpl115a2_c12;
 
-	void readCoefficients(void);
+	float           Temp;
+	float           Press;
+
 };
 
 #endif // __AP_BARO_MPL115A2_H__

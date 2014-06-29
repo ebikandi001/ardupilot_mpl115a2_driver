@@ -34,6 +34,24 @@ bool AP_Baro_MPL115A2::init() {
 	return true;
 }
 
+
+/**************************************************************************/
+/*!
+	@brief  Reads the newest data and stores it in variables
+*/
+/**************************************************************************/
+uint8_t AP_Baro_MPL115A2::read(){
+
+	//Read the coefficients to ensure the newest data
+	readcoeficients();
+
+	//Get the pressure and temperature
+	getPT(Press, Temp);
+
+	return 1;
+}
+
+
 /**************************************************************************/
 /*!
 	@brief  Gets the floating-point pressure level in kPa (private method)
