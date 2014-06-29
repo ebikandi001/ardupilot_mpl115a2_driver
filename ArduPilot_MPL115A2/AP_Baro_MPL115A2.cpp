@@ -116,6 +116,7 @@ void AP_Baro_MPL115A2::readCoefficients() {
 			MPL115A2_REGISTER_A0_COEFF_MSB, 8, buf);
 
 	if (res != 0) {
+        _retry_time = hal.scheduler->millis() + 1000;
 		hal.i2c->setHighSpeed(false);
 		healthy = false;
 		return;
