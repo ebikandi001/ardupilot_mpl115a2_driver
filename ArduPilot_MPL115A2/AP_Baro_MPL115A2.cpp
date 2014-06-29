@@ -43,10 +43,10 @@ bool AP_Baro_MPL115A2::init() {
 uint8_t AP_Baro_MPL115A2::read(){
 
 	//Read the coefficients to ensure the newest data
-	readcoeficients();
+	readCoefficients();
 
 	//Get the pressure and temperature
-	getPT(Press, Temp);
+	getPT(&Press, &Temp);
 
 	return 1;
 }
